@@ -1,0 +1,33 @@
+{
+  "name": "smartedu",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "npm@10.0.0",
+  "description": "SmartEDU — AI-powered educational platform for schools in Belarus",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "type-check": "turbo run type-check",
+    "db:generate": "turbo run db:generate --filter=@smartedu/db",
+    "db:push": "turbo run db:push --filter=@smartedu/db",
+    "db:seed": "turbo run db:seed --filter=@smartedu/db",
+    "db:studio": "turbo run db:studio --filter=@smartedu/db",
+    "clean": "turbo run clean"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.13.0"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0",
+    "prisma": "^5.13.0"
+  }
+}

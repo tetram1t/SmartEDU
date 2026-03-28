@@ -1,0 +1,397 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Organization
+// ============================================
+
+model School {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  classes   Class[]
+  subjects  Subject[]
+  textbooks Textbook[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  patronymic   String?
+  role         String   @default("STUDENT")
+  avatarUrl    String?
+  isActive     Boolean  @default(true)
+  schoolId     String
+  school       School   @relation(fields: [schoolId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Teacher
+  taughtSubjects     TeacherSubject[]
+  createdLessons     LessonPlan[]
+  createdTests       Test[]
+  createdAssignments Assignment[]
+  gradedWorks        Grade[]
+  comments           Comment[]
+
+  // Student
+  classEnrollment StudentClass?
+  studentWorks    StudentWork[]
+  extraPractices  ExtraPractice[]
+}
+
+// ============================================
+// Classes & Subjects
+// ============================================
+
+model Class {
+  id       String  @id @default(cuid())
+  name     String
+  grade    Int
+  parallel String?
+  year     Int
+  schoolId String
+  school   School  @relation(fields: [schoolId], references: [id])
+
+  students        StudentClass[]
+  teacherSubjects TeacherSubject[]
+  lessonPlans     LessonPlan[]
+  tests           Test[]
+  assignments     Assignment[]
+}
+
+model StudentClass {
+  id        String @id @default(cuid())
+  studentId String @unique
+  student   User   @relation(fields: [studentId], references: [id])
+  classId   String
+  class     Class  @relation(fields: [classId], references: [id])
+
+  @@unique([studentId, classId])
+}
+
+model Subject {
+  id       String @id @default(cuid())
+  name     String
+  schoolId String
+  school   School @relation(fields: [schoolId], references: [id])
+
+  teacherSubjects TeacherSubject[]
+  textbooks       Textbook[]
+  lessonPlans     LessonPlan[]
+  tests           Test[]
+  assignments     Assignment[]
+  topics          Topic[]
+}
+
+model TeacherSubject {
+  id        String  @id @default(cuid())
+  teacherId String
+  teacher   User    @relation(fields: [teacherId], references: [id])
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  classId   String
+  class     Class   @relation(fields: [classId], references: [id])
+
+  @@unique([teacherId, subjectId, classId])
+}
+
+model Topic {
+  id        String  @id @default(cuid())
+  name      String
+  order     Int     @default(0)
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  lessonPlans LessonPlan[]
+  tests       Test[]
+  assignments Assignment[]
+}
+
+// ============================================
+// Textbooks
+// ============================================
+
+model Textbook {
+  id         String   @id @default(cuid())
+  title      String
+  author     String?
+  gradeLevel Int
+  fileUrl    String
+  subjectId  String
+  subject    Subject  @relation(fields: [subjectId], references: [id])
+  schoolId   String
+  school     School   @relation(fields: [schoolId], references: [id])
+  createdAt  DateTime @default(now())
+
+  paragraphs TextbookParagraph[]
+}
+
+model TextbookParagraph {
+  id         String   @id @default(cuid())
+  number     Int
+  title      String?
+  content    String
+  textbookId String
+  textbook   Textbook @relation(fields: [textbookId], references: [id])
+
+  @@unique([textbookId, number])
+}
+
+// ============================================
+// Lesson Plans
+// ============================================
+
+model LessonPlan {
+  id         String  @id @default(cuid())
+  title      String
+  objective  String
+  duration   Int     @default(45)
+  content    String // JSON stringified
+  gradeLevel Int
+  isTemplate Boolean @default(false)
+
+  teacherId String
+  teacher   User    @relation(fields: [teacherId], references: [id])
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  classId   String?
+  class     Class?  @relation(fields: [classId], references: [id])
+  topicId   String?
+  topic     Topic?  @relation(fields: [topicId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// Tests & Questions
+// ============================================
+
+model Test {
+  id          String  @id @default(cuid())
+  title       String
+  description String?
+  type        String  @default("QUIZ")
+  difficulty  String  @default("MEDIUM")
+  timeLimit   Int?
+  answerKey   String? // JSON stringified answer key
+
+  teacherId String
+  teacher   User    @relation(fields: [teacherId], references: [id])
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  classId   String?
+  class     Class?  @relation(fields: [classId], references: [id])
+  topicId   String?
+  topic     Topic?  @relation(fields: [topicId], references: [id])
+
+  questions    TestQuestion[]
+  variants     TestVariant[]
+  studentWorks StudentWork[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TestQuestion {
+  id            String  @id @default(cuid())
+  text          String
+  type          String
+  options       String? // JSON
+  correctAnswer String // JSON
+  points        Int     @default(1)
+  explanation   String?
+  order         Int     @default(0)
+
+  testId    String
+  test      Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  variantId String?
+  variant   TestVariant? @relation(fields: [variantId], references: [id])
+}
+
+model TestVariant {
+  id     String @id @default(cuid())
+  name   String
+  testId String
+  test   Test   @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  questions TestQuestion[]
+
+  @@unique([testId, name])
+}
+
+// ============================================
+// Assignments
+// ============================================
+
+model Assignment {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  type        String
+  dueDate     DateTime?
+  maxScore    Int       @default(10)
+
+  teacherId String
+  teacher   User    @relation(fields: [teacherId], references: [id])
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
+  classId   String
+  class     Class   @relation(fields: [classId], references: [id])
+  topicId   String?
+  topic     Topic?  @relation(fields: [topicId], references: [id])
+
+  studentWorks StudentWork[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// Student Works & Grading
+// ============================================
+
+model StudentWork {
+  id     String @id @default(cuid())
+  status String @default("SUBMITTED")
+
+  studentId    String
+  student      User        @relation(fields: [studentId], references: [id])
+  testId       String?
+  test         Test?       @relation(fields: [testId], references: [id])
+  assignmentId String?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+
+  images     StudentWorkImage[]
+  ocrResults OcrResult[]
+  grades     Grade[]
+  comments   Comment[]
+
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model StudentWorkImage {
+  id       String @id @default(cuid())
+  imageUrl String
+  order    Int    @default(0)
+
+  workId String
+  work   StudentWork @relation(fields: [workId], references: [id], onDelete: Cascade)
+
+  ocrResult  OcrResult?
+  uploadedAt DateTime   @default(now())
+}
+
+model OcrResult {
+  id               String  @id @default(cuid())
+  rawText          String
+  extractedAnswers String? // JSON
+  confidence       Float   @default(0)
+  flagged          Boolean @default(false)
+  flagReason       String?
+
+  imageId String           @unique
+  image   StudentWorkImage @relation(fields: [imageId], references: [id])
+  workId  String
+  work    StudentWork      @relation(fields: [workId], references: [id])
+
+  processedAt DateTime @default(now())
+}
+
+model Grade {
+  id          String  @id @default(cuid())
+  score       Int
+  maxScore    Int     @default(10)
+  isAutomatic Boolean @default(false)
+  isFinal     Boolean @default(false)
+
+  workId     String
+  work       StudentWork @relation(fields: [workId], references: [id])
+  gradedById String
+  gradedBy   User        @relation(fields: [gradedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  auditTrail GradeAudit[]
+}
+
+model GradeAudit {
+  id            String  @id @default(cuid())
+  previousScore Int
+  newScore      Int
+  reason        String?
+  changedById   String
+
+  gradeId String
+  grade   Grade  @relation(fields: [gradeId], references: [id])
+
+  changedAt DateTime @default(now())
+}
+
+model Comment {
+  id       String  @id @default(cuid())
+  text     String
+  type     String  @default("MANUAL")
+  isEdited Boolean @default(false)
+
+  workId   String
+  work     StudentWork @relation(fields: [workId], references: [id])
+  authorId String
+  author   User        @relation(fields: [authorId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// Extra Practice
+// ============================================
+
+model ExtraPractice {
+  id         String @id @default(cuid())
+  title      String
+  content    String // JSON
+  type       String
+  difficulty String
+
+  studentId     String
+  student       User    @relation(fields: [studentId], references: [id])
+  relatedWorkId String?
+  relatedErrors String? // JSON
+
+  createdAt DateTime @default(now())
+}
+
+// ============================================
+// Background Jobs
+// ============================================
+
+model BackgroundJob {
+  id       String  @id @default(cuid())
+  type     String
+  status   String  @default("PENDING")
+  payload  String // JSON
+  result   String? // JSON
+  error    String?
+  attempts Int     @default(0)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
+}

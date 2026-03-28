@@ -1,0 +1,23 @@
+{
+  "name": "@smartedu/ai-agents",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc -w",
+    "lint": "eslint \"src/**/*.ts*\"",
+    "clean": "rm -rf .turbo node_modules dist"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^0.0.10",
+    "@smartedu/shared": "*",
+    "ai": "^3.1.15",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "typescript": "^5.4.5"
+  }
+}

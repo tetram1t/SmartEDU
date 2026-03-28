@@ -1,0 +1,39 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build
+.next/
+dist/
+out/
+build/
+.turbo/
+
+# database
+*.db
+*.db-journal
+prisma/dev.db
+
+# env
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+npm-debug.log*
+
+# uploads
+uploads/*
+!uploads/.gitkeep
