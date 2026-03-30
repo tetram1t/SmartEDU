@@ -80,7 +80,7 @@ npm run dev
 ---
 
 ## 🤝 Авторы
-Разработку ведут **nadinpetja** и команда SmartEDU. 
+Разработку ведут **nadinpetja** и **tetram1t**. 
 
 ---
 
