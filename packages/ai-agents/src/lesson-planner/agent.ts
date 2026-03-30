@@ -10,6 +10,8 @@ export const LessonPlanInputSchema = z.object({
   duration: z.number().default(45),
   objective: z.string().optional(),
   studentLevel: z.enum(['basic', 'advanced', 'mixed']).default('mixed'),
+  paragraphText: z.string().optional(),
+  additionalInstructions: z.string().optional(),
 });
 
 export type LessonPlanInput = z.infer<typeof LessonPlanInputSchema>;
@@ -51,6 +53,8 @@ Please create a lesson plan with the following constraints:
 - Duration: ${input.duration} minutes
 - Student Level: ${input.studentLevel}
 ${input.objective ? `- Objective: ${input.objective}` : ''}
+${input.additionalInstructions ? `- Additional Teacher Instructions: ${input.additionalInstructions}` : ''}
+${input.paragraphText ? `\nHere is the textbook content to base the lesson on:\n"""\n${input.paragraphText}\n"""\n` : ''}
     `;
 
     const { object } = await generateObject({

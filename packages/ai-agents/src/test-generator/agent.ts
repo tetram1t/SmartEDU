@@ -9,6 +9,8 @@ export const TestGeneratorInputSchema = z.object({
   topic: z.string(),
   questionCount: z.number().min(1).max(20).default(5),
   difficulty: z.enum(['easy', 'medium', 'hard', 'mixed']).default('medium'),
+  paragraphText: z.string().optional(),
+  additionalInstructions: z.string().optional(),
 });
 
 export type TestGeneratorInput = z.infer<typeof TestGeneratorInputSchema>;
@@ -35,9 +37,21 @@ export class TestGeneratorAgent extends BaseAgent<TestGeneratorInput, TestGenera
     super({
       model: config?.model || smartModel,
       systemPrompt: config?.systemPrompt || `
-You are an expert test creator for schools in Belarus (10-point grading system implicitly supported by varying question difficulties).
-Your task is to generate a comprehensive test with high-quality questions and accurate answers.
-Provide output strictly in JSON. The language must be Russian.
+You are an expert test designer (pedagogical measurement specialist) in Belarus.
+Your task is to generate high-quality educational tests in Russian.
+
+Guidelines for questions:
+1. SINGLE_CHOICE: Exactly one correct answer, 3 plausible distractors.
+2. MULTIPLE_CHOICE: 2 or more correct answers, total 4-5 options.
+3. SHORT_ANSWER: A single word or short phrase.
+
+Cognitive levels:
+- Knowledge: basic facts.
+- Application: using concepts in new situations.
+- Analysis: breaking down information.
+
+Ensure the "explanation" field for each question is pedagogical and explains why the answer is correct.
+Return strictly valid JSON matching the schema.
       `
     });
   }
@@ -50,8 +64,10 @@ Generate a test with the following constraints:
 - Topic: ${input.topic}
 - Number of questions: ${input.questionCount}
 - Difficulty: ${input.difficulty}
+${input.additionalInstructions ? `- Additional Teacher Instructions: ${input.additionalInstructions}\n` : ''}
 
 Make sure questions are unambiguous and cover the core concepts of the topic.
+${input.paragraphText ? `\nUse the following textbook content as the source of truth for the questions:\n"""\n${input.paragraphText}\n"""\n` : ''}
     `;
 
     const { object } = await generateObject({
